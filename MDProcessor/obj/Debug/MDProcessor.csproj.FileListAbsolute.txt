@@ -1,0 +1,8 @@
+c:\users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\bin\Debug\MDProcessor.exe.config
+C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\bin\Debug\MDProcessor.exe
+C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\bin\Debug\MDProcessor.pdb
+C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\bin\Debug\nunit.framework.dll
+C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\bin\Debug\nunit.framework.xml
+C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\obj\Debug\MDProcessor.csprojResolveAssemblyReference.cache
+C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\obj\Debug\MDProcessor.exe
+C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\obj\Debug\MDProcessor.pdb
