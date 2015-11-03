@@ -107,8 +107,8 @@ bc`";
             var codeIndices = new int[0];
             var expected = new Node();
             expected.AddChild("abc");
-            var tm = new TreeMaker(text, codeIndices);
-            var actual = tm.MakeTextTree();
+            var tm = new TreeMaker();
+            var actual = tm.MakeTextTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -116,10 +116,10 @@ bc`";
         {         
             var text = @"a\\b\c";
             var codeIndices = new int[0];
-            var tm = new TreeMaker(text, codeIndices);
+            var tm = new TreeMaker();
             var expected = new Node();
             expected.AddChild(@"a\b\c");
-            var actual = tm.MakeTextTree();
+            var actual = tm.MakeTextTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -127,13 +127,84 @@ bc`";
         {
             var text = @"\_a b_ _\_c__ d";
             var codeIndices = new int[0];
-            var tm = new TreeMaker(text, codeIndices);
+            var tm = new TreeMaker();
             var expected = new Node();
             expected.AddChild(@"_a b_ ");
             var emNode = new Node() {Tag = Tag.Em};
             expected.AddChild(emNode);
             expected.AddChild(@"_c__ d");
-            var actual = tm.MakeTextTree();
+            var actual = tm.MakeTextTree(text, codeIndices);
+            CollectionAssert.AreEqual(expected.Children, actual.Children);
+        }
+        [Test]
+        public void MakeTextTree_TextWithCodeTag_ParseTagCode()
+        {
+            var text = @"a`b`";
+            var codeIndices = new int[1] {1};
+            var tm = new TreeMaker();
+            var expected = new Node();
+            expected.AddChild(@"a");
+            var codeTag = new Node() { IsComplete = true, Tag = Tag.Code};
+            codeTag.AddChild(@"b");
+            expected.AddChild(codeTag);
+            expected.AddChild("");
+            var actual = tm.MakeTextTree(text, codeIndices);
+            CollectionAssert.AreEqual(expected.Children, actual.Children);
+        }
+        [Test]
+        public void MakeTextTree_TextWithEscapeInsideCodeTag_DontParseEscapeSymbol()
+        {
+            var text = @"a`b\`";
+            var codeIndices = new int[1] { 1 };
+            var tm = new TreeMaker();
+            var expected = new Node();
+            expected.AddChild(@"a");
+            var codeTag = new Node() { IsComplete = true, Tag = Tag.Code };
+            codeTag.AddChild(@"b\");
+            expected.AddChild(codeTag);
+            expected.AddChild("");
+            var actual = tm.MakeTextTree(text, codeIndices);
+            CollectionAssert.AreEqual(expected.Children, actual.Children);
+        }
+        [Test]
+        public void MakeTextTree_TreeWithTagInTag_ParseCorrectly()
+        {
+            var text = @"__b _`a`_ c__";
+            var codeIndices = new int[1] { 5 };
+            var tm = new TreeMaker();
+            var expected = new Node();
+            var codeTag = new Node() { IsComplete = true, Tag = Tag.Code };
+            var emTag = new Node() {IsComplete = true, Tag = Tag.Em};
+            var strongTag = new Node() {IsComplete = true, Tag = Tag.Strong};
+            codeTag.AddChild("a");
+            emTag.AddChild("");
+            emTag.AddChild(codeTag);
+            emTag.AddChild("");
+            strongTag.AddChild("b ");
+            strongTag.AddChild(emTag);
+            strongTag.AddChild(" c");
+            expected.AddChild("");
+            expected.AddChild(strongTag);
+            expected.AddChild("");
+            var actual = tm.MakeTextTree(text, codeIndices);
+            CollectionAssert.AreEqual(expected.Children, actual.Children);
+        }
+        [Test]
+        public void MakeTextTree_DifferentTagsIntersect_TakeFirstTag()
+        {
+            var text = @"a _a __b_ c__";
+            var codeIndices = new int[1] { 1 };
+            var tm = new TreeMaker();
+            var expected = new Node();
+            expected.AddChild(@"a ");
+            var emTag = new Node() { IsComplete = true, Tag = Tag.Em };
+            var incompleteStrongTag = new Node() {Tag = Tag.Strong};
+            emTag.AddChild(@"a ");
+            emTag.AddChild(incompleteStrongTag);
+            emTag.AddChild("b");
+            expected.AddChild(emTag);
+            expected.AddChild(" c__");
+            var actual = tm.MakeTextTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
     }

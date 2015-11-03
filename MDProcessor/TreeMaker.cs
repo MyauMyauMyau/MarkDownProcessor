@@ -8,15 +8,15 @@ namespace MDProcessor
 {
     public class TreeMaker
     {
-        string Text { get;}
+        string Text { get; set; }
         int Index { get; set; }
-        int[] CodeIndices { get; }
+        int[] CodeIndices { get; set; }
         int LowLineIndex { get; set; }
         int DoubleLowLineIndex { get; set; }
-        StringBuilder TextStorage { get;}
         bool IsEscaping { get; set; }
-        Stack<object> ParsingStack { get; }
-        public TreeMaker(string text, int[] codeIndices)
+        Stack<object> ParsingStack { get; set; }
+        StringBuilder TextStorage { get; set; }
+        public Node MakeTextTree(string text, int[] codeIndices)
         {
             Index = 0;
             Text = text;
@@ -26,9 +26,6 @@ namespace MDProcessor
             TextStorage = new StringBuilder();
             IsEscaping = false;
             ParsingStack = new Stack<object>();
-        }
-        public Node MakeTextTree()
-        {
             for (; Index < Text.Length; ++Index)
             {
                 var symbol = Text[Index];
@@ -85,7 +82,6 @@ namespace MDProcessor
 
         private void ParseLowLine()
         {
-            var symbol = '_';
             //parse opening em and strong tags
             if (CanBeOpeningTag() &&
                 (IsOpeningSingleLowLine() || IsOpeningDoubleLowLine()))
@@ -108,21 +104,25 @@ namespace MDProcessor
             else if (CanBeClosingTag() &&
                      (IsClosingSingleLowLine() || IsClosingDoubleLowLine()))
             {
-                ParsingStack.Push(TextStorage.ToString());
-                TextStorage.Clear();
+                
                 if (IsClosingSingleLowLine())
                 {
+                    ParsingStack.Push(TextStorage.ToString());
+                    TextStorage.Clear();
                     ConstructNodeAndPushBackToStack(Tag.Em);
                     LowLineIndex = -1;
                 }
                 else
                 {
+                    TextStorage.Remove(TextStorage.Length - 1, 1);
+                    ParsingStack.Push(TextStorage.ToString());
+                    TextStorage.Clear();
                     ConstructNodeAndPushBackToStack(Tag.Strong);
                     DoubleLowLineIndex = -1;
                 }
             }
             else
-                TextStorage.Append(symbol);
+                TextStorage.Append('_');
         }
 
         private bool IsClosingDoubleLowLine()
@@ -157,24 +157,28 @@ namespace MDProcessor
         private void ConstructNodeAndPushBackToStack(Tag tag)
         {
             var node = new Node { Tag = tag, IsComplete = true };
-            var curNode = ParsingStack.Pop();
-            while (true)
+            
+            while (ParsingStack.Count>0)
             {
+                object curNode = ParsingStack.Pop();
                 if (curNode is string)
                 {
                     node.AddChild(curNode);
-                    curNode = ParsingStack.Pop();
                 }
                 else
                 {
                     var castedNode = curNode as Node;
                     if (castedNode.Tag == tag && !castedNode.IsComplete)
                         break;
-                    if (!castedNode.IsComplete)
-
-                        node.AddChild(castedNode);
+                    if (castedNode.Tag == Tag.Em && !castedNode.IsComplete)
+                        LowLineIndex = -1;
+                    if (castedNode.Tag == Tag.Strong && !castedNode.IsComplete)
+                        DoubleLowLineIndex = -1;
+                    node.AddChild(castedNode);
                 }
             }
+            node.ReverseChildren();
+            ParsingStack.Push(node);
         }
     }
 }

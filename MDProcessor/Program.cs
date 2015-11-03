@@ -22,6 +22,10 @@ namespace MDProcessor
     {
         public string ConvertTextToHtml(string text)
         {
+            var treeMaker = new TreeMaker();
+            var paragraphs = SplitToParagraphs(text)
+                .Select(x => treeMaker
+                    .MakeTextTree(x, FindCodeTagIndices(x)));
             return text;
         }
 
@@ -41,7 +45,7 @@ namespace MDProcessor
 
     public class Node
     {
-        public List<object> Children { get; }
+        public List<object> Children { get; private set; }
 
         public Tag Tag;
         public bool IsComplete;
@@ -65,11 +69,18 @@ namespace MDProcessor
             {
                 return false;
             }
-            return Children.SequenceEqual(anotherNode.Children) && Tag == anotherNode.Tag;
+            return Children.SequenceEqual(anotherNode.Children) && Tag == anotherNode.Tag 
+                && IsComplete == anotherNode.IsComplete;
         }
         public bool Equals(Node anotherNode)
         {
-            return Children.SequenceEqual(anotherNode.Children) && Tag == anotherNode.Tag;
+            return Children.SequenceEqual(anotherNode.Children) && Tag == anotherNode.Tag 
+                && IsComplete == anotherNode.IsComplete;
+        }
+
+        public void ReverseChildren()
+        {
+            Children.Reverse();
         }
     }
 
