@@ -32,7 +32,6 @@ namespace MDProcessor
 
         public int[] FindCodeTagIndices(string text)
         {
-            // fffff
             return Regex.Matches(text, "((?<!([^\\\\]|^)(\\\\\\\\)*\\\\)`[^`]*`)", RegexOptions.Singleline)
                 .Cast<Match>()
                 .Select((x => x.Index))
@@ -41,9 +40,9 @@ namespace MDProcessor
 
         public Node MakeTextTree(string text, int[] codeIndices)
         {
-            var stack = new Stack<object>();
-            var _index = -1;
-            var __index = -1;
+            var parsingStack = new Stack<object>();
+            var lowLineIndex = -1;
+            var doubleLowLineIndex = -1;
             var textStorage = new StringBuilder();
             var isEscaping = false;
             for (var index = 0; index < text.Length; index++)
@@ -51,7 +50,7 @@ namespace MDProcessor
                 var symbol = text[index];
                 if (isEscaping)
                 {
-                    if (symbol != '\\' || symbol != '_')
+                    if (symbol != '\\' && symbol != '_' && symbol !='`')
                         textStorage.Append("\\");
                     textStorage.Append(symbol);
                     isEscaping = false;
@@ -60,52 +59,42 @@ namespace MDProcessor
                 switch (symbol)
                 {
                     case '_':
-                        var isSpecial = false;
-                        if (index == 0 || !char.IsLetterOrDigit(text[index - 1]))
+                        //parse opening em and strong tags
+                        if (CanBeOpeningTag(text, index) &&
+                            (IsOpeningSingleLowLine(text, index, lowLineIndex) || IsOpeningDoubleLowLine(text, index, doubleLowLineIndex)))
                         {
-                            if (index < text.Length - 1 && text[index + 1] != '_' && _index == -1)
-                            {
-                                isSpecial = true;
-                                stack.Push(textStorage.ToString());
-                                textStorage.Clear();
-                                stack.Push(new Node() {Tag = Tag.Em});
-                                _index = index;
-                                index++;
+                            parsingStack.Push(textStorage.ToString());
+                            textStorage.Clear();
+                            if (IsOpeningSingleLowLine(text, index, lowLineIndex))
+                            {    
+                                parsingStack.Push(new Node() {Tag = Tag.Em});
+                                lowLineIndex = index;
                             }
-
-                            else if (index < text.Length - 2 && text[index + 2] != '_' && __index == -1)
+                            else
                             {
-                                isSpecial = true;
-                                stack.Push(textStorage.ToString());
-                                textStorage.Clear();
-                                stack.Push(new Node() {Tag = Tag.Strong});
-                                __index = index;
-                                index += 2;
-                            }
-
-                        }
-                        if (!isSpecial && (index == text.Length - 1 || !Char.IsLetterOrDigit(text[index-1])))
-                        {
-                            if (index > 0 && text[index - 1] != '_' && _index != -1)
-                            {
-                                isSpecial = true;
-                                stack.Push(textStorage.ToString());
-                                textStorage.Clear();
-                                ConstructNode(stack, Tag.Em);
-                                _index = -1;
-                                index++;
-                            }
-                            else if (index > 1 && text[index - 2] != '_' && __index != -1)
-                            {
-                                isSpecial = true;
-                                stack.Push(textStorage.ToString());
-                                textStorage.Clear();
-                                ConstructNode(stack, Tag.Strong);
-                                __index = -1;
-                                index += 2;
+                                parsingStack.Push(new Node() {Tag = Tag.Strong});
+                                doubleLowLineIndex = index;
+                                index ++;
                             }
                         }
-                        if (!isSpecial)
+                        //parse closing em and strong tags
+                        else if (CanBeClosingTag(text, index) &&
+                            (IsClosingSingleLowLine(text, index, lowLineIndex) || IsClosingDoubleLowLine(text, index, doubleLowLineIndex)))
+                        {
+                            parsingStack.Push(textStorage.ToString());
+                            textStorage.Clear();
+                            if (IsClosingSingleLowLine(text, index, lowLineIndex))
+                            {    
+                                ConstructNode(parsingStack, Tag.Em);
+                                lowLineIndex = -1;
+                            }
+                            else
+                            {
+                                ConstructNode(parsingStack, Tag.Strong);
+                                doubleLowLineIndex = -1;
+                            }
+                        }
+                        else
                             textStorage.Append(symbol);
                         break;
                     case '\\':
@@ -115,7 +104,7 @@ namespace MDProcessor
                         if (codeIndices.Contains(index))
                         {
                             var node = new Node() {Tag = Tag.Code, IsComplete = true};
-                            stack.Push(textStorage.ToString());
+                            parsingStack.Push(textStorage.ToString());
                             textStorage.Clear();
                             index++;
                             while (text[index] != '`')
@@ -125,7 +114,7 @@ namespace MDProcessor
                             }
                             node.AddChild(textStorage.ToString());
                             textStorage.Clear();
-                            stack.Push(node);
+                            parsingStack.Push(node);
                         }
                         else
                         {
@@ -137,6 +126,38 @@ namespace MDProcessor
                         break;
                 }
             }
+            parsingStack.Push(textStorage.ToString());
+            return new Node(parsingStack.Reverse().ToList()) {IsComplete = true, Tag = Tag.Paragraph};
+        }
+
+        private static bool IsClosingDoubleLowLine(string text, int index, int doubleLineIndex)
+        {
+            return index > 1 && text[index - 2] != '_' && doubleLineIndex != -1;
+        }
+
+        private bool IsClosingSingleLowLine(string text, int index, int lowLineIndex)
+        {
+            return index > 0 && text[index - 1] != '_' && lowLineIndex != -1;
+        }
+
+        private static bool CanBeClosingTag(string text, int index)
+        {
+            return (index == text.Length - 1 || (!char.IsLetterOrDigit(text[index+1]) && text[index+1] != '_'));
+        }
+
+        private static bool IsOpeningSingleLowLine(string text, int index, int lowLineIndex)
+        {
+            return index < text.Length - 1 && text[index + 1] != '_' && lowLineIndex == -1;
+        }
+
+        private static bool IsOpeningDoubleLowLine(string text, int index, int doubleLineIndex)
+        {
+            return index < text.Length - 2 && text[index + 2] != '_' && doubleLineIndex == -1;
+        }
+
+        private bool CanBeOpeningTag(string text, int index)
+        {
+            return index == 0 || (!char.IsLetterOrDigit(text[index - 1]) && text[index-1] !='_');
         }
 
         private void ConstructNode(Stack<object> stack, Tag tag)
@@ -170,16 +191,30 @@ namespace MDProcessor
         public Tag Tag;
         public bool IsComplete;
 
-        public Node()
+        public Node() : this(new List<object>()) { }
+
+        public Node(List<object> children)
         {
-            Children = new List<object>();
+            Children = children;
             IsComplete = false;
         }
-
         public void AddChild(object node)
         {
             if(!(node is Node || node is string)) throw new ArgumentException("недопустимое значение");
             Children.Add(node);
+        }
+        public override bool Equals(object obj)
+        {
+            var anotherNode = obj as Node;
+            if (anotherNode == null)
+            {
+                return false;
+            }
+            return Children.SequenceEqual(anotherNode.Children) && Tag == anotherNode.Tag;
+        }
+        public bool Equals(Node anotherNode)
+        {
+            return Children.SequenceEqual(anotherNode.Children) && Tag == anotherNode.Tag;
         }
     }
 
