@@ -107,17 +107,19 @@ bc`";
             var codeIndices = new int[0];
             var expected = new Node();
             expected.AddChild("abc");
-            var actual = MarkDownProcessor.MakeTextTree(text, codeIndices);
+            var tm = new TreeMaker(text, codeIndices);
+            var actual = tm.MakeTextTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
         public void MakeTextTree_SimpleTextWithEscapeSymbols_ParseEscapeSymbolCorrectly()
-        {
+        {         
             var text = @"a\\b\c";
             var codeIndices = new int[0];
+            var tm = new TreeMaker(text, codeIndices);
             var expected = new Node();
             expected.AddChild(@"a\b\c");
-            var actual = MarkDownProcessor.MakeTextTree(text, codeIndices);
+            var actual = tm.MakeTextTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -125,12 +127,13 @@ bc`";
         {
             var text = @"\_a b_ _\_c__ d";
             var codeIndices = new int[0];
+            var tm = new TreeMaker(text, codeIndices);
             var expected = new Node();
             expected.AddChild(@"_a b_ ");
             var emNode = new Node() {Tag = Tag.Em};
             expected.AddChild(emNode);
             expected.AddChild(@"_c__ d");
-            var actual = MarkDownProcessor.MakeTextTree(text, codeIndices);
+            var actual = tm.MakeTextTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
     }
