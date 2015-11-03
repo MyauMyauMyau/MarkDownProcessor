@@ -14,8 +14,10 @@ namespace MDProcessor
             var treeMaker = new TreeBuilder();
             var paragraphs = SplitToParagraphs(text)
                 .Select(x => treeMaker
-                    .BuildTree(x, FindCodeTagIndices(x)));
-            return text;
+                    .BuildTree(x, FindCodeTagIndices(x)))
+                .Select(ConvertTreeToHtml);
+                    
+            return String.Join("", paragraphs);
         }
 
         public Dictionary<Tag, string> DecodeTag = new Dictionary<Tag, string>()
