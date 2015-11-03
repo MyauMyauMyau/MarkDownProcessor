@@ -25,19 +25,19 @@ namespace MDProcessor
             [Tag.Em] = "em",
             [Tag.Strong] = "strong"
         };  
-        public string ConvertTreeToHtml(Node node)
+        public string ConvertTreeToHtml(TextTree textTree)
         {
             var text = new StringBuilder();
             text.Append("<");
-            text.Append(DecodeTag[node.Tag]);
+            text.Append(DecodeTag[textTree.Tag]);
             text.Append(">");
-            foreach (var child in node.Children)
+            foreach (var child in textTree.Children)
             {
                 if (child is string)
                     text.Append(child);
                 else
                 {
-                    var taggedNode = child as Node;
+                    var taggedNode = child as TextTree;
                     if (!taggedNode.IsComplete)
                     {
                         if (taggedNode.Tag == Tag.Em)
@@ -49,7 +49,7 @@ namespace MDProcessor
                 }
             }
             text.Append("</");
-            text.Append(DecodeTag[node.Tag]);
+            text.Append(DecodeTag[textTree.Tag]);
             text.Append(">");
             return text.ToString();
         }

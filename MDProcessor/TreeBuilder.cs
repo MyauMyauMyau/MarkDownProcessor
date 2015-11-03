@@ -16,7 +16,7 @@ namespace MDProcessor
         bool IsEscaping { get; set; }
         Stack<object> ParsingStack { get; set; }
         StringBuilder TextStorage { get; set; }
-        public Node BuildTree(string text, int[] codeIndices)
+        public TextTree BuildTree(string text, int[] codeIndices)
         {
             Index = 0;
             Text = text;
@@ -54,14 +54,14 @@ namespace MDProcessor
                 }
             }
             ParsingStack.Push(TextStorage.ToString());
-            return new Node(ParsingStack.Reverse().ToList()) { IsComplete = true, Tag = Tag.Paragraph };
+            return new TextTree(ParsingStack.Reverse().ToList()) { IsComplete = true, Tag = Tag.Paragraph };
         }
 
         private void ParseBackQuote()
         {
             if (CodeIndices.Contains(Index))
             {
-                var node = new Node() {Tag = Tag.Code, IsComplete = true};
+                var node = new TextTree() {Tag = Tag.Code, IsComplete = true};
                 ParsingStack.Push(TextStorage.ToString());
                 TextStorage.Clear();
                 Index++;
@@ -90,12 +90,12 @@ namespace MDProcessor
                 TextStorage.Clear();
                 if (IsOpeningSingleLowLine())
                 {
-                    ParsingStack.Push(new Node() {Tag = Tag.Em});
+                    ParsingStack.Push(new TextTree() {Tag = Tag.Em});
                     LowLineIndex = Index;
                 }
                 else
                 {
-                    ParsingStack.Push(new Node() {Tag = Tag.Strong});
+                    ParsingStack.Push(new TextTree() {Tag = Tag.Strong});
                     DoubleLowLineIndex = Index;
                     Index++;
                 }
@@ -156,7 +156,7 @@ namespace MDProcessor
         }
         private void ConstructNodeAndPushBackToStack(Tag tag)
         {
-            var node = new Node { Tag = tag, IsComplete = true };
+            var node = new TextTree { Tag = tag, IsComplete = true };
             
             while (ParsingStack.Count>0)
             {
@@ -167,7 +167,7 @@ namespace MDProcessor
                 }
                 else
                 {
-                    var castedNode = curNode as Node;
+                    var castedNode = curNode as TextTree;
                     if (castedNode.Tag == tag && !castedNode.IsComplete)
                         break;
                     if (castedNode.Tag == Tag.Em && !castedNode.IsComplete)

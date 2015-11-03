@@ -48,7 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MarkDownProcessor.cs" />
-    <Compile Include="Node.cs" />
+    <Compile Include="TextTree.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="MarkDownProcessorTests.cs" />
