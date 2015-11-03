@@ -9,7 +9,7 @@ namespace MDProcessor
     [TestFixture]
     class MarkDownProcessorTests
     {
-        public Processor MarkDownProcessor = new Processor();
+        public MarkDownProcessor MarkDownProcessor = new MarkDownProcessor();
         [Test]
         public void SplitToParagraphs_ParagraphsSeparatedBySingleEmptyLine_SingleParagraph()
         {
@@ -107,8 +107,8 @@ bc`";
             var codeIndices = new int[0];
             var expected = new Node();
             expected.AddChild("abc");
-            var tm = new TreeMaker();
-            var actual = tm.MakeTextTree(text, codeIndices);
+            var tm = new TreeBuilder();
+            var actual = tm.BuildTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -116,10 +116,10 @@ bc`";
         {         
             var text = @"a\\b\c";
             var codeIndices = new int[0];
-            var tm = new TreeMaker();
+            var tm = new TreeBuilder();
             var expected = new Node();
             expected.AddChild(@"a\b\c");
-            var actual = tm.MakeTextTree(text, codeIndices);
+            var actual = tm.BuildTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -127,13 +127,13 @@ bc`";
         {
             var text = @"\_a b_ _\_c__ d";
             var codeIndices = new int[0];
-            var tm = new TreeMaker();
+            var tm = new TreeBuilder();
             var expected = new Node();
             expected.AddChild(@"_a b_ ");
             var emNode = new Node() {Tag = Tag.Em};
             expected.AddChild(emNode);
             expected.AddChild(@"_c__ d");
-            var actual = tm.MakeTextTree(text, codeIndices);
+            var actual = tm.BuildTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -141,14 +141,14 @@ bc`";
         {
             var text = @"a`b`";
             var codeIndices = new int[1] {1};
-            var tm = new TreeMaker();
+            var tm = new TreeBuilder();
             var expected = new Node();
             expected.AddChild(@"a");
             var codeTag = new Node() { IsComplete = true, Tag = Tag.Code};
             codeTag.AddChild(@"b");
             expected.AddChild(codeTag);
             expected.AddChild("");
-            var actual = tm.MakeTextTree(text, codeIndices);
+            var actual = tm.BuildTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -156,14 +156,14 @@ bc`";
         {
             var text = @"a`b\`";
             var codeIndices = new int[1] { 1 };
-            var tm = new TreeMaker();
+            var tm = new TreeBuilder();
             var expected = new Node();
             expected.AddChild(@"a");
             var codeTag = new Node() { IsComplete = true, Tag = Tag.Code };
             codeTag.AddChild(@"b\");
             expected.AddChild(codeTag);
             expected.AddChild("");
-            var actual = tm.MakeTextTree(text, codeIndices);
+            var actual = tm.BuildTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -171,7 +171,7 @@ bc`";
         {
             var text = @"__b _`a`_ c__";
             var codeIndices = new int[1] { 5 };
-            var tm = new TreeMaker();
+            var tm = new TreeBuilder();
             var expected = new Node();
             var codeTag = new Node() { IsComplete = true, Tag = Tag.Code };
             var emTag = new Node() {IsComplete = true, Tag = Tag.Em};
@@ -186,7 +186,7 @@ bc`";
             expected.AddChild("");
             expected.AddChild(strongTag);
             expected.AddChild("");
-            var actual = tm.MakeTextTree(text, codeIndices);
+            var actual = tm.BuildTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -194,7 +194,7 @@ bc`";
         {
             var text = @"a _a __b_ c__";
             var codeIndices = new int[1] { 1 };
-            var tm = new TreeMaker();
+            var tm = new TreeBuilder();
             var expected = new Node();
             expected.AddChild(@"a ");
             var emTag = new Node() { IsComplete = true, Tag = Tag.Em };
@@ -204,8 +204,39 @@ bc`";
             emTag.AddChild("b");
             expected.AddChild(emTag);
             expected.AddChild(" c__");
-            var actual = tm.MakeTextTree(text, codeIndices);
+            var actual = tm.BuildTree(text, codeIndices);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
+        }
+        [Test]
+        public void ConvertTreeToHTML_SimpleTextTree_GetSimpleText()
+        {
+            var tree = new Node() {IsComplete = true, Tag = Tag.Paragraph};
+            tree.AddChild("abc");
+            var expected = "<p>abc</p>";
+            var actual = MarkDownProcessor.ConvertTreeToHtml(tree);
+            CollectionAssert.AreEqual(expected, actual);
+        }
+        [Test]
+        public void ConvertTreeToHTML_DeepTree_ParseCorrectly()
+        {
+
+            var tree = new Node();
+            var codeTag = new Node() { IsComplete = true, Tag = Tag.Code };
+            var emTag = new Node() { IsComplete = true, Tag = Tag.Em };
+            var strongTag = new Node() { IsComplete = true, Tag = Tag.Strong };
+            codeTag.AddChild("a");
+            emTag.AddChild("");
+            emTag.AddChild(codeTag);
+            emTag.AddChild("");
+            strongTag.AddChild("b ");
+            strongTag.AddChild(emTag);
+            strongTag.AddChild(" c");
+            tree.AddChild("");
+            tree.AddChild(strongTag);
+            tree.AddChild("");
+            var expected = "<p><strong>b <em><code>a</code></em> c</strong></p>";
+            var actual = MarkDownProcessor.ConvertTreeToHtml(tree);
+            CollectionAssert.AreEqual(expected, actual);
         }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MDProcessor
 {
-    public class TreeMaker
+    public class TreeBuilder
     {
         string Text { get; set; }
         int Index { get; set; }
@@ -16,7 +16,7 @@ namespace MDProcessor
         bool IsEscaping { get; set; }
         Stack<object> ParsingStack { get; set; }
         StringBuilder TextStorage { get; set; }
-        public Node MakeTextTree(string text, int[] codeIndices)
+        public Node BuildTree(string text, int[] codeIndices)
         {
             Index = 0;
             Text = text;
@@ -104,7 +104,6 @@ namespace MDProcessor
             else if (CanBeClosingTag() &&
                      (IsClosingSingleLowLine() || IsClosingDoubleLowLine()))
             {
-                
                 if (IsClosingSingleLowLine())
                 {
                     ParsingStack.Push(TextStorage.ToString());
@@ -114,7 +113,8 @@ namespace MDProcessor
                 }
                 else
                 {
-                    TextStorage.Remove(TextStorage.Length - 1, 1);
+                    
+                    TextStorage.Remove(TextStorage.Length - 1, 1); //remove previous '_'
                     ParsingStack.Push(TextStorage.ToString());
                     TextStorage.Clear();
                     ConstructNodeAndPushBackToStack(Tag.Strong);
