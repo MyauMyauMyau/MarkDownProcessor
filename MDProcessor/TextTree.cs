@@ -21,9 +21,9 @@ namespace MDProcessor
             IsComplete = false;
         }
 
-        public TextTree(string text, int[] codeIndices)
+        public TextTree(string text)
         {
-            var nodeFromText = new TreeBuilder().BuildTree(text, codeIndices);
+            var nodeFromText = new TreeBuilder(text).GetTree();
             Tag = nodeFromText.Tag;
             Children = nodeFromText.Children;
             IsComplete = nodeFromText.IsComplete;

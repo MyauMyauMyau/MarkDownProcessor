@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace MDProcessor
@@ -16,47 +18,63 @@ namespace MDProcessor
         bool IsEscaping { get; set; }
         Stack<object> ParsingStack { get; set; }
         StringBuilder TextStorage { get; set; }
-        public TextTree BuildTree(string text, int[] codeIndices)
+
+
+        public TreeBuilder(string text)
         {
-            Index = 0;
             Text = text;
-            CodeIndices = codeIndices;
+        }
+
+        public TextTree GetTree()
+        {
+            CodeIndices = FindCodeTagIndices(Text);
             LowLineIndex = -1;
             DoubleLowLineIndex = -1;
             TextStorage = new StringBuilder();
             IsEscaping = false;
             ParsingStack = new Stack<object>();
-            for (; Index < Text.Length; ++Index)
+            for (Index = 0; Index < Text.Length; ++Index)
             {
-                var symbol = Text[Index];
-                if (IsEscaping)
-                {
-                    if (symbol != '\\' && symbol != '_' && symbol != '`')
-                        TextStorage.Append("\\");
-                    TextStorage.Append(symbol);
-                    IsEscaping = false;
-                    continue;
-                }
-                switch (symbol)
-                {
-                    case '_':
-                        ParseLowLine();
-                        break;
-                    case '\\':
-                        IsEscaping = true;
-                        break;
-                    case '`':
-                        ParseBackQuote();
-                        break;
-                    default:
-                        TextStorage.Append(symbol);
-                        break;
-                }
+                ParseSymbol(Text[Index]);
             }
             ParsingStack.Push(TextStorage.ToString());
             return new TextTree(ParsingStack.Reverse().ToList()) { IsComplete = true, Tag = Tag.Paragraph };
         }
 
+        private void ParseSymbol(char symbol)
+        {
+            if (IsEscaping)
+            {
+                if (symbol != '\\' && symbol != '_' && symbol != '`')
+                    TextStorage.Append("\\");
+                TextStorage.Append(symbol);
+                IsEscaping = false;
+                return;
+            }
+            switch (symbol)
+            {
+                case '_':
+                    ParseLowLine();
+                    break;
+                case '\\':
+                    IsEscaping = true;
+                    break;
+                case '`':
+                    ParseBackQuote();
+                    break;
+                default:
+                    TextStorage.Append(symbol);
+                    break;
+            }
+        }
+
+        public int[] FindCodeTagIndices(string text)
+        {
+            return Regex.Matches(text, "((?<!([^\\\\]|^)(\\\\\\\\)*\\\\)`[^`]*`)", RegexOptions.Singleline)
+                .Cast<Match>()
+                .Select((x => x.Index))
+                .ToArray();
+        }
         private void ParseBackQuote()
         {
             if (CodeIndices.Contains(Index))

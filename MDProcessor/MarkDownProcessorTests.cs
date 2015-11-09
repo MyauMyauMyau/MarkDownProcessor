@@ -10,168 +10,123 @@ namespace MDProcessor
     class MarkDownProcessorTests
     {
         public MarkDownProcessor MarkDownProcessor = new MarkDownProcessor();
-        [Test]
-        public void SplitToParagraphs_ParagraphsSeparatedBySingleEmptyLine_SingleParagraph()
-        {
-            var text = @"a  \r\nb";
-            var expected = new string[1] {@"a  \r\nb"};
-            var actual = MarkDownProcessor.SplitToParagraphs(text);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-        [Test]
-        public void SplitToParagraphs_ParagraphsSeparatedByTwoOrMoreEmptyLine_SplitToTwoParagraphs()
-        {
-            var text = @"a
+        [TestCase(@"a  \r\nb",
+            Result = new string[] {@"a  \r\nb"},
+            TestName = "SplitToParagraphs_ParagraphsSeparatedBySingleEmptyLine_SingleParagraph")]
+        [TestCase(@"a
     
             
-b";
-            var expected = new string[2] {"a", "b" };
-            var actual = MarkDownProcessor.SplitToParagraphs(text);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-        [Test]
-        public void SplitToParagraphs_ParagraphsWithSpacesAtStartAndEnd_DontLoseSpaces()
-        {
-            var text = @"a  
+b",
+            Result = new string[] { "a", "b" },
+            TestName = "SplitToParagraphs_ParagraphsSeparatedByTwoOrMoreEmptyLine_SplitToTwoParagraphs")]
+        [TestCase(@"a  
     
             
-    b";
-            var expected = new string[2] { "a  ", "    b" };
-            var actual = MarkDownProcessor.SplitToParagraphs(text);
-            CollectionAssert.AreEqual(expected, actual);
+    b",
+            Result = new string[] { "a  ", "    b" },
+            TestName = "SplitToParagraphs_ParagraphsWithSpacesAtStartAndEnd_DontLoseSpaces")]
+        public string[] SplitToParagraphs(string textToSplit)
+        {
+            var actual = MarkDownProcessor.SplitToParagraphs(textToSplit);
+            return actual;
         }
 
-        [Test]
-        public void FindCodeTagIndices_CodeTagInsideOfText_Find()
-        {
-            var text = @"abc`d`efg";
-            var expected = new int[1] {3};
-            var actual = MarkDownProcessor.FindCodeTagIndices(text);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-        [Test]
-        public void FindCodeTagIndices_SecondBackQuoteIsEscaped_IgnoreEscapeSymbolAndFind()
-        {
-            var text = @"abc`d\`efg";
-            var expected = new int[1] {3};
-            var actual = MarkDownProcessor.FindCodeTagIndices(text);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-        [Test]
-        public void FindCodeTagIndices_FirstBackQuoteIsEscaped_CantFind()
-        {
-            var text = @"\`d`efg";
-            var expected = new int[0];
-            var actual = MarkDownProcessor.FindCodeTagIndices(text);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-        [Test]
-        public void FindCodeTagIndices_ThreeBackQuotes_GetMatchOnlyAtFirst()
-        {
-            var text = @"a`b`c`d";
-            var expected = new int[1] {1};
-            var actual = MarkDownProcessor.FindCodeTagIndices(text);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-        [Test]
-        public void FindCodeTagIndices_MultipleBackQuotes_FindAllMatches()
-        {
-            var text = @"`a`b`c`d`e`f`g`";
-            var expected = new int[4] { 0,4,8,12 };
-            var actual = MarkDownProcessor.FindCodeTagIndices(text);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-        [Test]
-        public void FindCodeTagIndices_BackQuotesOnDifferentLines_Find()
-        {
-            var text = @"d`a
 
-bc`";
-            var expected = new int[1] {1};
-            var actual = MarkDownProcessor.FindCodeTagIndices(text);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-        [Test]
-        public void FindCodeTagIndices_BackQuoteIsDoubleEscaped_DontFind()
+        [TestCase(@"abc`d`efg",
+            Result = new int[] { 3 },
+            TestName = "FindCodeTagIndices_CodeTagInsideOfText_Find")]
+        [TestCase(@"abc`d\`efg",
+            Result = new int[] { 3 },
+            TestName = "FindCodeTagIndices_SecondBackQuoteIsEscaped_IgnoreEscapeSymbolAndFind")]
+        [TestCase(@"\`d`efg",
+            Result = new int[0],
+            TestName = "FindCodeTagIndices_FirstBackQuoteIsEscaped_CantFind")]
+        [TestCase(@"a`b`c`d",
+            Result = new int[] { 1 },
+            TestName = "FindCodeTagIndices_ThreeBackQuotes_GetMatchOnlyAtFirst")]
+        [TestCase(@"`a`b`c`d`e`f`g`",
+            Result = new int[] { 0, 4, 8, 12 },
+            TestName = "FindCodeTagIndices_MultipleBackQuotes_FindAllMatches")]
+        [TestCase(@"d`a
+
+bc`",
+            Result = new int[] { 1 },
+            TestName = "BackQuotesOnDifferentLines_Find")]
+        [TestCase(@"\\`b`",
+            Result = new int[] { 2 },
+            TestName = "FindCodeTagIndices_BackQuoteIsDoubleEscaped_DontFind")]
+        public int[] FindCodeTagIndices(string text)
         {
-            var text = @"\\`b`";
-            var expected = new int[1] {2};
-            var actual = MarkDownProcessor.FindCodeTagIndices(text);
-            CollectionAssert.AreEqual(expected, actual);
+            var treeBuilder = new TreeBuilder(text);
+            var actual = treeBuilder.FindCodeTagIndices(text);
+            return actual;
         }
 
         [Test]
         public void MakeTextTree_SimpleText_GetSingleTextNode()
         {
             var text = @"abc";
-            var codeIndices = new int[0];
             var expected = new TextTree();
             expected.AddChild("abc");
-            var tm = new TreeBuilder();
-            var actual = tm.BuildTree(text, codeIndices);
+            var tm = new TreeBuilder(text);
+            var actual = tm.GetTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
         public void MakeTextTree_SimpleTextWithEscapeSymbols_ParseEscapeSymbolCorrectly()
         {         
             var text = @"a\\b\c";
-            var codeIndices = new int[0];
-            var tm = new TreeBuilder();
             var expected = new TextTree();
             expected.AddChild(@"a\b\c");
-            var actual = tm.BuildTree(text, codeIndices);
+            var tm = new TreeBuilder(text);
+            var actual = tm.GetTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
         public void MakeTextTree_EscapeSymbolsBeforeTags_EscapeSymbolsEscapeTags()
         {
             var text = @"\_a b_ _\_c__ d";
-            var codeIndices = new int[0];
-            var tm = new TreeBuilder();
             var expected = new TextTree();
             expected.AddChild(@"_a b_ ");
             var emNode = new TextTree() {Tag = Tag.Em};
             expected.AddChild(emNode);
             expected.AddChild(@"_c__ d");
-            var actual = tm.BuildTree(text, codeIndices);
+            var tm = new TreeBuilder(text);
+            var actual = tm.GetTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
         public void MakeTextTree_TextWithCodeTag_ParseTagCode()
         {
             var text = @"a`b`";
-            var codeIndices = new int[1] {1};
-            var tm = new TreeBuilder();
             var expected = new TextTree();
             expected.AddChild(@"a");
             var codeTag = new TextTree() { IsComplete = true, Tag = Tag.Code};
             codeTag.AddChild(@"b");
             expected.AddChild(codeTag);
             expected.AddChild("");
-            var actual = tm.BuildTree(text, codeIndices);
+            var tm = new TreeBuilder(text);
+            var actual = tm.GetTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
         public void MakeTextTree_TextWithEscapeInsideCodeTag_DontParseEscapeSymbol()
         {
             var text = @"a`b\`";
-            var codeIndices = new int[1] { 1 };
-            var tm = new TreeBuilder();
             var expected = new TextTree();
             expected.AddChild(@"a");
             var codeTag = new TextTree() { IsComplete = true, Tag = Tag.Code };
             codeTag.AddChild(@"b\");
             expected.AddChild(codeTag);
             expected.AddChild("");
-            var actual = tm.BuildTree(text, codeIndices);
+            var tm = new TreeBuilder(text);
+            var actual = tm.GetTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
         public void MakeTextTree_TreeWithTagInTag_ParseCorrectly()
         {
             var text = @"__b _`a`_ c__";
-            var codeIndices = new int[1] { 5 };
-            var tm = new TreeBuilder();
             var expected = new TextTree();
             var codeTag = new TextTree() { IsComplete = true, Tag = Tag.Code };
             var emTag = new TextTree() {IsComplete = true, Tag = Tag.Em};
@@ -186,15 +141,14 @@ bc`";
             expected.AddChild("");
             expected.AddChild(strongTag);
             expected.AddChild("");
-            var actual = tm.BuildTree(text, codeIndices);
+            var tm = new TreeBuilder(text);
+            var actual = tm.GetTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
         public void MakeTextTree_DifferentTagsIntersect_TakeFirstTag()
         {
             var text = @"a _a __b_ c__";
-            var codeIndices = new int[1] { 1 };
-            var tm = new TreeBuilder();
             var expected = new TextTree();
             expected.AddChild(@"a ");
             var emTag = new TextTree() { IsComplete = true, Tag = Tag.Em };
@@ -204,7 +158,8 @@ bc`";
             emTag.AddChild("b");
             expected.AddChild(emTag);
             expected.AddChild(" c__");
-            var actual = tm.BuildTree(text, codeIndices);
+            var tm = new TreeBuilder(text);
+            var actual = tm.GetTree();
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
