@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace MDProcessor
 {
     public class TreeBuilder
     {
-        string Text { get; set; }
+        StringBuilder Text { get; set; }
         int Index { get; set; }
         int[] CodeIndices { get; set; }
         int LowLineIndex { get; set; }
@@ -16,11 +17,35 @@ namespace MDProcessor
         bool IsEscaping { get; set; }
         Stack<object> ParsingStack { get; set; }
         StringBuilder TextStorage { get; set; }
-        public TextTree BuildTree(string text, int[] codeIndices)
+
+        public TreeBuilder()
+        {
+            Text = new StringBuilder();
+        }
+
+        public TreeBuilder(string text)
+        {
+            Text = new StringBuilder(text);
+        }
+
+        public void Append(string text)
+        {
+            Text.Append(text);
+        }
+
+        public void Append(char c)
+        {
+            Text.Append(c);
+        }
+
+        public void Clear()
+        {
+            Text.Clear();
+        }
+        public TextTree ToTree()
         {
             Index = 0;
-            Text = text;
-            CodeIndices = codeIndices;
+            CodeIndices = FindCodeTagIndices(Text.ToString());
             LowLineIndex = -1;
             DoubleLowLineIndex = -1;
             TextStorage = new StringBuilder();
@@ -56,7 +81,13 @@ namespace MDProcessor
             ParsingStack.Push(TextStorage.ToString());
             return new TextTree(ParsingStack.Reverse().ToList()) { IsComplete = true, Tag = Tag.Paragraph };
         }
-
+        public int[] FindCodeTagIndices(string text)
+        {
+            return Regex.Matches(text, "((?<!([^\\\\]|^)(\\\\\\\\)*\\\\)`[^`]*`)", RegexOptions.Singleline)
+                .Cast<Match>()
+                .Select((x => x.Index))
+                .ToArray();
+        }
         private void ParseBackQuote()
         {
             if (CodeIndices.Contains(Index))

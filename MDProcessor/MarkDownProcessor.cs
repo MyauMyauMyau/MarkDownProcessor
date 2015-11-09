@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -11,10 +12,9 @@ namespace MDProcessor
     {
         public string ConvertTextToHtml(string text)
         {
-            var treeMaker = new TreeBuilder();
+            
             var paragraphs = SplitToParagraphs(text)
-                .Select(x => treeMaker
-                    .BuildTree(x, FindCodeTagIndices(x)))
+                .Select(x => new TreeBuilder(x).ToTree())
                 .Select(ConvertTreeToHtml);
                     
             return String.Join("", paragraphs);
@@ -58,14 +58,6 @@ namespace MDProcessor
         public string[] SplitToParagraphs(string text)
         {
             return Regex.Split(text, "(?:\r\n\\s*){1,}\r\n");
-        }
-
-        public int[] FindCodeTagIndices(string text)
-        {
-            return Regex.Matches(text, "((?<!([^\\\\]|^)(\\\\\\\\)*\\\\)`[^`]*`)", RegexOptions.Singleline)
-                .Cast<Match>()
-                .Select((x => x.Index))
-                .ToArray();
         }
     }
 
