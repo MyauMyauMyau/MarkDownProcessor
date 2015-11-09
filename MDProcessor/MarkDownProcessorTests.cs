@@ -57,7 +57,7 @@ bc`",
             TestName = "FindCodeTagIndices_BackQuoteIsDoubleEscaped_DontFind")]
         public int[] FindCodeTagIndices(string text)
         {
-            var treeBuilder = new TreeBuilder(text);
+            var treeBuilder = new TreeBuilder();
             var actual = treeBuilder.FindCodeTagIndices(text);
             return actual;
         }
@@ -68,8 +68,8 @@ bc`",
             var text = @"abc";
             var expected = new TextTree();
             expected.AddChild("abc");
-            var tm = new TreeBuilder(text);
-            var actual = tm.GetTree();
+            var tm = new TreeBuilder();
+            var actual = tm.GetTree(text);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -78,8 +78,8 @@ bc`",
             var text = @"a\\b\c";
             var expected = new TextTree();
             expected.AddChild(@"a\b\c");
-            var tm = new TreeBuilder(text);
-            var actual = tm.GetTree();
+            var tm = new TreeBuilder();
+            var actual = tm.GetTree(text);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -91,8 +91,8 @@ bc`",
             var emNode = new TextTree() {Tag = Tag.Em};
             expected.AddChild(emNode);
             expected.AddChild(@"_c__ d");
-            var tm = new TreeBuilder(text);
-            var actual = tm.GetTree();
+            var tm = new TreeBuilder();
+            var actual = tm.GetTree(text);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -105,8 +105,8 @@ bc`",
             codeTag.AddChild(@"b");
             expected.AddChild(codeTag);
             expected.AddChild("");
-            var tm = new TreeBuilder(text);
-            var actual = tm.GetTree();
+            var tm = new TreeBuilder();
+            var actual = tm.GetTree(text);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -119,8 +119,8 @@ bc`",
             codeTag.AddChild(@"b\");
             expected.AddChild(codeTag);
             expected.AddChild("");
-            var tm = new TreeBuilder(text);
-            var actual = tm.GetTree();
+            var tm = new TreeBuilder();
+            var actual = tm.GetTree(text);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -141,8 +141,8 @@ bc`",
             expected.AddChild("");
             expected.AddChild(strongTag);
             expected.AddChild("");
-            var tm = new TreeBuilder(text);
-            var actual = tm.GetTree();
+            var tm = new TreeBuilder();
+            var actual = tm.GetTree(text);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]
@@ -158,8 +158,8 @@ bc`",
             emTag.AddChild("b");
             expected.AddChild(emTag);
             expected.AddChild(" c__");
-            var tm = new TreeBuilder(text);
-            var actual = tm.GetTree();
+            var tm = new TreeBuilder();
+            var actual = tm.GetTree(text);
             CollectionAssert.AreEqual(expected.Children, actual.Children);
         }
         [Test]

@@ -20,13 +20,10 @@ namespace MDProcessor
         StringBuilder TextStorage { get; set; }
 
 
-        public TreeBuilder(string text)
+
+        public TextTree GetTree(string text)
         {
             Text = text;
-        }
-
-        public TextTree GetTree()
-        {
             CodeIndices = FindCodeTagIndices(Text);
             LowLineIndex = -1;
             DoubleLowLineIndex = -1;

@@ -12,9 +12,9 @@ namespace MDProcessor
     {
         public string ConvertTextToHtml(string text)
         {
-            
+            var treeBuilder = new TreeBuilder();
             var paragraphs = SplitToParagraphs(text)
-                .Select(x => new TreeBuilder(x).GetTree())
+                .Select(x => treeBuilder.GetTree(x))
                 .Select(ConvertTreeToHtml);
                     
             return String.Join("", paragraphs);
@@ -42,10 +42,7 @@ namespace MDProcessor
                     var taggedNode = child as TextTree;
                     if (!taggedNode.IsComplete)
                     {
-                        if (taggedNode.Tag == Tag.Em)
-                            text.Append("_");
-                        else
-                            text.Append("__");
+                        text.Append(taggedNode.Tag == Tag.Em ? "_" : "__");
                     }
                     text.Append(ConvertTreeToHtml(taggedNode));
                 }

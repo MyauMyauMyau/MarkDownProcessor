@@ -23,7 +23,7 @@ namespace MDProcessor
 
         public TextTree(string text)
         {
-            var nodeFromText = new TreeBuilder(text).GetTree();
+            var nodeFromText = new TreeBuilder().GetTree(text);
             Tag = nodeFromText.Tag;
             Children = nodeFromText.Children;
             IsComplete = nodeFromText.IsComplete;
