@@ -1,12 +1,9 @@
 ﻿using System;
 using System.CodeDom;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+
+using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using NUnit.Framework.Constraints;
 
 namespace MDProcessor
 {
@@ -14,7 +11,13 @@ namespace MDProcessor
     {
         static void Main(string[] args)
         {
-
+            var mdText = File.ReadAllText("test.md", Encoding.Default);
+            //Console.Write(mdText);
+            var mdProcessor = new MarkDownProcessor();
+            var htmlText = mdProcessor.ConvertTextToHtml(mdText);
+            //Console.Write(htmlText);
+            File.WriteAllText("test.html", htmlText);
+            Console.Write(File.ReadAllText("test.html"));
         }
     }
 

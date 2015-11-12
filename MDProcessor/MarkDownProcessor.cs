@@ -30,9 +30,12 @@ namespace MDProcessor
         public string ConvertTreeToHtml(TextTree textTree)
         {
             var text = new StringBuilder();
-            text.Append("<");
-            text.Append(DecodeTag[textTree.Tag]);
-            text.Append(">");
+            if (textTree.IsComplete)
+            {
+                text.Append("<");
+                text.Append(DecodeTag[textTree.Tag]);
+                text.Append(">");
+            }
             foreach (var child in textTree.Children)
             {
                 if (child is string)
@@ -40,6 +43,7 @@ namespace MDProcessor
                 else
                 {
                     var taggedNode = child as TextTree;
+                    // ReSharper disable once PossibleNullReferenceException
                     if (!taggedNode.IsComplete)
                     {
                         text.Append(taggedNode.Tag == Tag.Em ? "_" : "__");
@@ -47,9 +51,12 @@ namespace MDProcessor
                     text.Append(ConvertTreeToHtml(taggedNode));
                 }
             }
-            text.Append("</");
-            text.Append(DecodeTag[textTree.Tag]);
-            text.Append(">");
+            if (textTree.IsComplete)
+            {
+                text.Append("</");
+                text.Append(DecodeTag[textTree.Tag]);
+                text.Append(">");
+            }
             return text.ToString();
         }
         public string[] SplitToParagraphs(string text)
