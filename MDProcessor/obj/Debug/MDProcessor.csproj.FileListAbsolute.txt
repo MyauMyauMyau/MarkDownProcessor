@@ -6,3 +6,7 @@ C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\bin\
 C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\obj\Debug\MDProcessor.csprojResolveAssemblyReference.cache
 C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\obj\Debug\MDProcessor.exe
 C:\Users\user\documents\visual studio 2015\Projects\MDProcessor\MDProcessor\obj\Debug\MDProcessor.pdb
+C:\Users\user\Documents\Visual Studio 2015\Projects\MDProcessor\MDProcessor\bin\Debug\CommandLine.dll
+C:\Users\user\Documents\Visual Studio 2015\Projects\MDProcessor\MDProcessor\bin\Debug\ReflectionBridge.dll
+C:\Users\user\Documents\Visual Studio 2015\Projects\MDProcessor\MDProcessor\bin\Debug\CommandLine.xml
+C:\Users\user\Documents\Visual Studio 2015\Projects\MDProcessor\MDProcessor\bin\Debug\ReflectionBridge.xml

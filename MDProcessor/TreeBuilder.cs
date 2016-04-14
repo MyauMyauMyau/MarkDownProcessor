@@ -18,9 +18,6 @@ namespace MDProcessor
         private bool isEscaping;
         private Stack<object> parsingStack;
         private StringBuilder textStorage;
-
-
-
         public TextTree GetTree(string textToParse)
         {
             text = textToParse;
@@ -70,9 +67,9 @@ namespace MDProcessor
             }
         }
 
-        public int[] FindCodeTagIndices(string text)
+        public int[] FindCodeTagIndices(string textToParse)
         {
-            return Regex.Matches(text, "((?<!([^\\\\]|^)(\\\\\\\\)*\\\\)`[^`]*`)", RegexOptions.Singleline)
+            return Regex.Matches(textToParse, "((?<!([^\\\\]|^)(\\\\\\\\)*\\\\)`[^`]*`)", RegexOptions.Singleline)
                 .Cast<Match>()
                 .Select((x => x.Index))
                 .ToArray();

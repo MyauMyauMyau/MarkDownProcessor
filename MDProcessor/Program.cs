@@ -1,23 +1,23 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections;
-
 using System.IO;
 using System.Text;
-
+using CommandLine;
 namespace MDProcessor
 {
     class Program
     {
         static void Main(string[] args)
         {
-            var mdText = File.ReadAllText("test.md", Encoding.Default);
-            //Console.Write(mdText);
-            var mdProcessor = new MarkDownProcessor();
-            var htmlText = mdProcessor.ConvertTextToHtml(mdText);
-            //Console.Write(htmlText);
-            File.WriteAllText("test.html", htmlText);
-            Console.Write(File.ReadAllText("test.html"));
+			var options = new Options();
+			var parser = new Parser();
+	        if (parser.ParseArguments(args, options))
+	        {
+		        var mdText = File.ReadAllText(options.InputFile, Encoding.Default);
+		        var mdProcessor = new MarkDownProcessor();
+		        var htmlText = mdProcessor.ConvertTextToHtml(mdText);
+		        File.WriteAllText(options.OutputFile, htmlText);
+	        }
         }
     }
 
